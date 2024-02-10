@@ -1,0 +1,34 @@
+version: '3'
+services:
+  app:
+    build: 
+      context: .
+      dockerfile: docker/kotlin_springboot_api_server/Dockerfile
+    container_name: kotlin_springboot_api_server
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ./gradlew bootRun
+  db:
+    build: 
+      context: .
+      dockerfile: docker/mysql_server/Dockerfile
+    container_name: mysql_server
+    ports:
+      - 3306:3306
+    volumes:
+      - ./db/data:/var/lib/mysql
+      - ./docker/mysql_server/init:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    healthcheck:
+        test: mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD
